@@ -1,0 +1,20 @@
+Dim follwed by load_date=(dateandtime)
+
+Customers (optional)
+Assets
+Sites
+Buildings
+Sensors
+
+
+Fact follwed by load_date=(dateandtime)
+
+IoTTelemetry
+Events
+
+Gold follwed by load_date=(dateandtime)
+
+HourlyEnergyConsumption
+DailyAssetUtilization
+AverageEnvironmentalConditions
+FaultStatisticsPerAsset
