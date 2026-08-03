@@ -18,3 +18,82 @@ HourlyEnergyConsumption
 DailyAssetUtilization
 AverageEnvironmentalConditions
 FaultStatisticsPerAsset
+
+
+
+-----------------------------------------------------
+
+CREATE TABLE sites (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    site_id         VARCHAR(20) UNIQUE NOT NULL,
+    site_name       VARCHAR(150) NOT NULL,
+    address         VARCHAR(255),
+    city            VARCHAR(100),
+    country         VARCHAR(100),
+    timezone        VARCHAR(50),
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE buildings (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    building_id     VARCHAR(20) UNIQUE NOT NULL,
+    building_name   VARCHAR(150) NOT NULL,
+    site_id         VARCHAR(20) NOT NULL REFERENCES sites(site_id),
+    floor_count     INT,
+    building_type   VARCHAR(100),
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+
+
+CREATE TABLE assets (
+    id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    asset_id            VARCHAR(20) UNIQUE NOT NULL,
+    asset_name          VARCHAR(150) NOT NULL,
+    asset_type          VARCHAR(100) NOT NULL,
+    manufacturer        VARCHAR(150),
+    installation_date   DATE,
+    site_id             VARCHAR(20) NOT NULL REFERENCES sites(site_id),
+    parent_asset_id     VARCHAR(20) REFERENCES assets(asset_id),
+    created_at          TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+
+CREATE TABLE sensors (
+    id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    sensor_id           VARCHAR(20) UNIQUE NOT NULL,
+    asset_id            VARCHAR(20) NOT NULL REFERENCES assets(asset_id),
+    sensor_type         VARCHAR(100),
+    unit                VARCHAR(20),
+    installation_date   DATE,
+    created_at          TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+
+CREATE TABLE iot_telemetry (
+    id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    "timestamp"         TIMESTAMPTZ NOT NULL,
+    site_id             VARCHAR(20) NOT NULL REFERENCES sites(site_id),
+    building_id         VARCHAR(20) NOT NULL REFERENCES buildings(building_id),
+    asset_id            VARCHAR(20) NOT NULL REFERENCES assets(asset_id),
+    sensor_id           VARCHAR(20) NOT NULL REFERENCES sensors(sensor_id),
+    temperature         NUMERIC(6,2),
+    humidity            NUMERIC(6,2),
+    pressure            NUMERIC(8,2),
+    vibration           NUMERIC(6,3),
+    power_consumption   NUMERIC(10,3),
+    operating_mode      VARCHAR(50),
+    ingested_at         TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE (site_id, building_id, asset_id, sensor_id, "timestamp")
+);
+
+CREATE TABLE events (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    event_id        VARCHAR(20) UNIQUE NOT NULL,
+    "timestamp"     TIMESTAMPTZ NOT NULL,
+    asset_id        VARCHAR(20) NOT NULL REFERENCES assets(asset_id),
+    event_type      VARCHAR(20) NOT NULL CHECK (event_type IN ('Alarm', 'Warning', 'Fault')),
+    severity        VARCHAR(20) NOT NULL CHECK (severity IN ('Low', 'Medium', 'High')),
+    message         TEXT,
+    ingested_at     TIMESTAMPTZ NOT NULL DEFAULT now()
+);
